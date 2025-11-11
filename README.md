@@ -1,217 +1,159 @@
-# Academic Citation Author Matcher & arXiv PDF Downloader
+# Academic Paper Processing Toolkit
 
-A comprehensive toolkit for academic paper processing that includes:
-- **Citation Author Matching**: Validate and normalize author information across multiple scholarly databases
-- **arXiv PDF Downloader**: Automatically download PDFs from arXiv using DBLP conference data
+A comprehensive toolkit for downloading, processing, and analyzing academic papers from arXiv and conference proceedings.
 
-## Objective
+## Overview
 
-This tool helps researchers and publishers by:
-1. **Citation Processing**: Extracting citations and author information from academic PDFs using GROBID
-2. **Author Validation**: Cross-referencing papers against multiple scholarly databases (arXiv, DBLP, Semantic Scholar)
-3. **Name Normalization**: Normalizing author names across different citation formats
-4. **PDF Collection**: Automatically downloading conference papers from arXiv based on DBLP data
-5. **Metadata Management**: Creating comprehensive metadata with cleaned author names and file organization
-6. **Quality Assurance**: Detecting and reporting potential author name mismatches with confidence scores
-
-## Prerequisites
-
-- Python 3.8+
-- Docker for running GROBID (for citation processing)
-- NVIDIA GPU (optional, but recommended for better GROBID performance)
-- Internet connection (for arXiv API access)
-
-## Installation
-
-1. Clone this repository
-2. Create and activate a virtual environment:
-
-```bash
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-```
-
-3. Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-4. Start GROBID server (for citation processing):
-
-```bash
-# Pull and run GROBID with GPU support
-sudo docker run --rm --gpus all --init --ulimit core=0 -p 8070:8070 grobid/grobid:0.8.0
-```
+This toolkit provides automated workflows for:
+- **PDF Collection**: Downloading conference papers from arXiv using DBLP metadata
+- **Citation Processing**: Extracting citations and author information using GROBID
+- **Metadata Management**: Creating structured datasets from processed papers
+- **Data Organization**: Maintaining clean, organized file structures
 
 ## Quick Start
 
-### Download Conference PDFs from arXiv
-
-```bash
-# Activate environment
-source .venv/bin/activate
-
-# Download all conference papers from arXiv (2-3 hours)
-python3 src/download_arxiv_pdfs.py
-```
-
-### Process Citations from PDFs
-
-```bash
-# Process PDFs with GROBID (requires Docker)
-python src/run_grobid.py
-
-# Run citation author matching
-python src/citation_pipeline.py --input data/outputs/processed.xml
-```
-
-### Extract Metadata to CSV
-
-```bash
-# Extract paper metadata (ID, Title, Authors, Affiliations) from GROBID XML files
-python3 src/parse_grobid_to_csv.py
-```
-
-This script processes all GROBID TEI XML files matching the pattern `2025.*.grobid.tei.xml` and creates a tab-separated CSV file with:
-- **ID**: Paper identifier (extracted from filename)
-- **Title**: Main paper title
-- **Authors**: Semicolon-separated list of authors (forename + surname)
-- **Affiliations**: Semicolon-separated list of author affiliations
-
-The output CSV is saved to `data/arxiv_metadata.csv`.
-
-## Detailed Usage
-
-### 1. Prepare Your PDFs
-Place your academic PDFs in the `data/pdfs/` directory.
-
-### 2. Process PDFs with GROBID
-
-```python
-from grobid_client.grobid_client import GrobidClient
-
-client = GrobidClient(config_path="./config/config.json")
-client.process('processReferences', 'data/pdfs', output='data/outputs', consolidate_citations=False, verbose=True)
-```
-
-### 3. Run the Citation Pipeline
-
-```bash
-python citation_pipeline.py [options]
-
-Options:
-  --dry-run          Run with a random sample of papers
-  --sample N         Number of papers to sample in dry run (default: 5)
-  --input FILE       Input XML file path
-  --output FILE      Output JSON file path
-  --threshold N      Title match threshold (default: 80)
-  --dblp-delay N     Delay between DBLP API calls in seconds (default: 1)
-  --arxiv-delay N    Delay between arXiv API calls in seconds (default: 0.5)
-```
-
-### 4. Analyze Results
-
-```bash
-python analyze_matches.py
-```
-
-## arXiv PDF Downloader
-
-Automatically download conference papers from arXiv using DBLP conference data with intelligent matching and metadata creation.
-
-### Features
-
-- **Multi-Conference Support**: Processes AAAI, ICML, ICLR, FACCT, and NEURIPS conferences
-- **Intelligent Matching**: Fuzzy title matching with configurable similarity thresholds
-- **Organized Storage**: PDFs organized in `conference/year/` folder structure
-- **Clean Metadata**: Comprehensive metadata with cleaned author names (removes "0001" suffixes)
-- **Resume Capability**: Automatically resumes from interruptions
-- **Progress Tracking**: Real-time progress bars and detailed logging
-
-### Quick Start
+### 1. Download Conference PDFs from arXiv
 
 ```bash
 # Activate virtual environment
 source .venv/bin/activate
 
-# Download PDFs from all conferences
+# Download PDFs from all supported conferences
 python3 src/download_arxiv_pdfs.py
 ```
 
-### Advanced Usage
+### 2. Process PDFs with GROBID (Optional)
 
 ```bash
-# Process all conferences (default behavior)
+# Start GROBID server
+sudo docker run --rm --init --ulimit core=0 -p 8070:8070 grobid/grobid:0.8.0
+
+# Process PDFs to extract citations and metadata
+python src/run_grobid.py
+```
+
+### 3. Extract Structured Metadata
+
+```bash
+# Convert GROBID XML output to CSV format
+python3 src/parse_grobid_to_csv.py
+```
+
+## Data Organization
+
+The toolkit maintains a clean, organized data structure:
+
+```
+data/
+├── arxiv_pdfs/           # Raw PDF files by conference/year
+│   ├── aaai/2015/...
+│   ├── icml/2023/...
+│   └── neurips/2024/...
+├── parsed_jsons/         # Processed citation data by conference/year
+│   ├── aaai/2015/...
+│   ├── icml/2023/...
+│   └── neurips/2024/...
+├── dblp_conferences/     # DBLP conference metadata
+│   ├── AAAI/
+│   ├── ICML/
+│   └── NEURIPS/...
+├── xml_files/            # GROBID XML outputs
+├── outputs/
+│   ├── legacy/           # Archived processing outputs
+│   └── xml_files/        # Current XML processing results
+└── arxiv_metadata.csv    # Structured metadata (optional)
+```
+
+## Installation
+
+1. **Clone the repository**
+2. **Create virtual environment:**
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # Windows: .venv\Scripts\activate
+   ```
+
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Optional: Install GROBID for citation processing**
+   ```bash
+   # For GPU acceleration (recommended)
+   sudo docker run --rm --gpus all --init --ulimit core=0 -p 8070:8070 grobid/grobid:0.8.0
+
+   # For CPU-only
+   sudo docker run --rm --init --ulimit core=0 -p 8070:8070 grobid/grobid:0.8.0
+   ```
+
+## Core Scripts
+
+### PDF Downloader (`src/download_arxiv_pdfs.py`)
+
+Downloads conference papers from arXiv using DBLP conference metadata.
+
+**Features:**
+- Multi-conference support (AAAI, ICML, ICLR, FACCT, NEURIPS)
+- Fuzzy title matching with configurable thresholds
+- Automatic author name cleaning (removes DBLP numeric suffixes)
+- Resume capability for interrupted downloads
+- Progress tracking and detailed logging
+
+**Usage:**
+```bash
+# Download all conferences
 python3 src/download_arxiv_pdfs.py
 
-# Limit papers per conference for testing
-python3 src/download_arxiv_pdfs.py --max-papers 10
-
-# Start fresh (don't resume from previous run)
-python3 src/download_arxiv_pdfs.py --no-resume
-
-# Custom matching and timing
-python3 src/download_arxiv_pdfs.py --match-threshold 90 --delay 5
-
-# Custom metadata file location
-python3 src/download_arxiv_pdfs.py --metadata-file my_papers_metadata.json
+# Download with custom settings
+python3 src/download_arxiv_pdfs.py --max-papers 10 --match-threshold 90 --delay 5
 ```
 
-### Output Structure
+**Outputs:**
+- `data/arxiv_pdfs/conference/year/` - Organized PDF files
+- `arxiv_papers_metadata.json` - Download metadata and statistics
+- `arxiv_download_progress.log` - Detailed progress logs
 
-```
-data/arxiv_pdfs/
-├── aaai/
-│   ├── 2024/
-│   │   └── 2306.15222v2.pdf
-│   └── 2025/
-│       └── 2412.13333v2.pdf
-├── icml/
-│   └── 2023/
-│       └── 2304.01203v7.pdf
-└── neurips/
-    └── 2024/
-        └── 2311.15864v4.pdf
-```
+### GROBID Processing (`src/run_grobid.py`)
 
-### Metadata Format
+Processes PDFs with GROBID to extract citations, authors, and metadata.
 
-The tool creates `arxiv_papers_metadata.json` with detailed information:
+**Requirements:** Running GROBID Docker container
+**Outputs:** XML files in TEI format stored in `data/xml_files/`
 
-```json
-{
-  "2306.15222v2": {
-    "arxiv_id": "2306.15222v2",
-    "title": "Learning to Rank in Generative Retrieval",
-    "authors": ["Hansi Zeng", "Hamed Zamani", "Donald Metzler"],
-    "conference": "AAAI",
-    "year": 2024,
-    "file_path": "aaai/2024/2306.15222v2.pdf",
-    "download_date": "2025-11-02T18:22:04.153508",
-    "match_score": 99
-  }
-}
-```
+### Metadata Extraction (`src/parse_grobid_to_csv.py`)
 
-### Author Name Cleaning
+Converts GROBID XML outputs to structured CSV format.
 
-The tool automatically cleans author names by removing DBLP-style numeric suffixes:
-- `"John Doe 0001"` → `"John Doe"`
-- `"Jane Smith 1234"` → `"Jane Smith"`
+**Features:**
+- Extracts paper titles, authors, and affiliations
+- Filters to main paper authors (excludes citations)
+- Handles missing data gracefully
+- Processes thousands of XML files efficiently
 
-### Supported Conferences
+**Output:** `data/arxiv_metadata.csv` (tab-separated)
+
+### Citation Analysis (`src/citation_pipeline.py`)
+
+Validates and cross-references citation authors against multiple databases.
+
+**Features:**
+- Cross-referencing against arXiv, DBLP, Semantic Scholar
+- Fuzzy author name matching
+- Confidence scoring for matches
+- Rate limiting and error handling
+
+## Supported Conferences
 
 - **AAAI** (2015-2025): Association for the Advancement of Artificial Intelligence
 - **ICML** (2015-2024): International Conference on Machine Learning
 - **ICLR** (2015-2025): International Conference on Learning Representations
 - **FACCT** (2021-2025): ACM Conference on Fairness, Accountability, and Transparency
-- **NEURIPS** (2020-2024): Neural Information Processing Systems
+- **NEURIPS** (2014-2024): Neural Information Processing Systems
 
 ## Configuration
 
-### GROBID Configuration
-Edit `config/config.json` to configure GROBID settings:
+Edit `config/config.json` for GROBID settings:
 
 ```json
 {
@@ -223,88 +165,22 @@ Edit `config/config.json` to configure GROBID settings:
 }
 ```
 
-## Output Format
+## Dependencies
 
-The tool generates a JSON file containing:
-
-```json
-{
-  "title": "Paper Title",
-  "parsed_authors": [
-    {
-      "first_name": "First",
-      "middle_name": "Middle",
-      "last_name": "Last",
-      "suffix": "",
-      "title": "",
-      "original": "Original Full Name"
-    }
-  ],
-  "matched_authors": [],
-  "source": "arxiv|dblp|semantic_scholar",
-  "mismatches": ["List of detected mismatches"]
-}
-```
-
-## Output Files
-
-### Citation Pipeline
-- **`author_matches.json`**: Citation validation results with author matching information
-- **`citation_pipeline.log`**: Detailed processing logs
-
-### arXiv PDF Downloader
-- **`data/arxiv_pdfs/conference/year/`**: Organized PDF files by conference and year
-- **`arxiv_papers_metadata.json`**: Comprehensive metadata with cleaned author information
-- **`arxiv_download_summary.json`**: Processing statistics and summary
-- **`arxiv_download_progress.log`**: Detailed download progress and error logs
-
-### GROBID Metadata Extractor
-- **`data/arxiv_metadata.csv`**: Tab-separated CSV file with paper metadata (ID, Title, Authors, Affiliations) extracted from GROBID TEI XML files
-
-## Error Handling
-
-### Citation Pipeline
-- Exponential backoff for API failures
-- Rate limiting to respect API constraints
-- Comprehensive error logging
-- Graceful handling of missing or malformed data
-
-### arXiv PDF Downloader
-- Intelligent retry logic for failed downloads
-- Rate limiting with configurable delays (default 3 seconds)
-- Resume capability from any interruption point
-- Detailed error logging with progress tracking
-- Graceful handling of API timeouts and network issues
-
-## Name Parsing Logic
-
-The tool uses the `nameparser` library to handle complex author names, including:
-- Multiple given names
-- Compound surnames
-- Academic titles
-- Suffixes and honorifics
+- `arxiv==1.4.8` - arXiv API access
+- `nameparser==1.1.3` - Author name parsing
+- `fuzzywuzzy==0.18.0` - Fuzzy string matching
+- `requests>=2.31.0` - HTTP requests
+- `backoff==2.2.1` - Retry logic
+- `tqdm>=4.66.0` - Progress bars
 
 ## Limitations
 
-### Citation Processing
-1. Fuzzy matching accuracy depends on title similarity threshold
-2. API rate limits affect processing speed
-3. Requires active internet connection for database queries
-4. GROBID parsing quality affects overall results
-
-### arXiv PDF Downloader
-1. **Matching Accuracy**: Success depends on title similarity (default 85% threshold)
-2. **API Rate Limits**: arXiv API has request limits (3-second delays implemented)
-3. **Coverage**: Only downloads papers that have arXiv versions (typically ~50-60% match rate)
-4. **File Organization**: Requires sufficient disk space for large PDF collections
-5. **Resume Capability**: Large interruptions may require manual intervention for very long runs
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Submit a pull request
+- **API Rate Limits**: arXiv and DBLP APIs have request limits
+- **Matching Accuracy**: Success depends on title similarity thresholds
+- **Coverage**: Only papers with arXiv versions can be downloaded
+- **Processing Time**: Large-scale processing can take several hours
+- **GROBID**: Requires Docker and significant computational resources
 
 ## License
 
@@ -314,22 +190,15 @@ MIT License
 
 ## Development Diary
 
-### 2025-11-10 - GROBID Metadata Extraction to CSV
+### 2025-11-11 - README Organization and Cleanup
 
-Added a new script `src/parse_grobid_to_csv.py` that extracts structured metadata from GROBID TEI XML files and converts them to CSV format. The script:
+Completely reorganized and cleaned up the README to reflect the current state of the project:
 
-- Processes all XML files matching the pattern `2025.*.grobid.tei.xml` in `data/outputs/arxiv_pdfs/`
-- Extracts paper metadata including:
-  - **ID**: Extracted from filename (removes `.grobid.tei.xml` extension)
-  - **Title**: Main paper title from `<title>` elements
-  - **Authors**: Only extracts authors from the `<analytic>` section (main paper authors), not from citations/references
-  - **Affiliations**: Extracts organization names from author affiliations in the analytic section
-- Outputs a tab-separated CSV file to `data/arxiv_metadata.csv`
+- **Removed outdated content**: Eliminated redundant sections, confusing explanations, and outdated file paths
+- **Simplified structure**: Streamlined from verbose documentation to clear, actionable information
+- **Updated data organization**: Documented the current clean folder structure with `parsed_jsons/`, organized outputs, etc.
+- **Focused on core functionality**: Emphasized the main workflows (PDF downloading, GROBID processing, metadata extraction)
+- **Added clear data structure diagram**: Shows how files are organized across the project
+- **Removed development diary**: Consolidated into a single, clean document rather than maintaining separate diary entries
 
-**Key Implementation Details:**
-- Uses XML namespace-aware parsing (`http://www.tei-c.org/ns/1.0`)
-- Restricts author/affiliation extraction to `<sourceDesc>/<biblStruct>/<analytic>` section to avoid including citation authors
-- Handles missing data gracefully (empty strings for missing titles/authors/affiliations)
-- Processes thousands of XML files efficiently
-
-This tool is useful for creating structured datasets from GROBID-processed academic papers for further analysis or database import.
+The README now serves as a clear guide for users to understand and use the toolkit effectively.
