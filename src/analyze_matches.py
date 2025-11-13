@@ -85,12 +85,14 @@ def find_closest_match(name: str, name_list: List[str]) -> Optional[tuple[str, f
     return None
 
 def get_initials(name: str) -> str:
-    """Extract initials from a name string, handling multiple words."""
+    """Extract initials from a name string, handling multiple words and accents."""
     initials = []
     for word in name.split():
         cleaned = word.replace('.', '').strip()
         if cleaned:
-            initials.append(cleaned[0].lower())
+            # Normalize accents before taking first character
+            normalized_first = unidecode(cleaned[0].lower())
+            initials.append(normalized_first)
     return ''.join(initials)
 
 def is_initial(name: str) -> bool:
